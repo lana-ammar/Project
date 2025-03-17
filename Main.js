@@ -5,24 +5,18 @@ const persistence = require('./persistence');
 // Initialize Express
 const app = express();
 
-// Middleware to parse JSON and URL-encoded data
+// Middleware for JSON and URL-encoded data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Use the presentation layer (routes)
+// Use the routes
 app.use('/', presentation);
 
-// Test MongoDB connection
+// Connect to MongoDB
 persistence.connectDatabase()
-    .then(() => {
-        console.log('MongoDB connection successful');
-    })
-    .catch((err) => {
-        console.error('Failed to connect to MongoDB:', err);
-    });
+    .then(() => console.log('MongoDB connected'))
+    .catch(err => console.error('MongoDB connection failed:', err));
 
-// Start the server
-const PORT = 8000; 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+// Start server
+const PORT = 8000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
