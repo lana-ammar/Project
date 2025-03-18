@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Head Login</title>
+</head>
+<body>
+    <h1>Department Head Login</h1>
+    <form id="departmentLoginForm">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit">Login</button>
+    </form>
+
+    <script>
+        document.getElementById('departmentLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password, role: 'department_head' }) // Include role
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                window.location.href = '/department-head.html';
+            } else {
+                alert(data.error);
+            }
+        });
+    </script>
+</body>
+</html>

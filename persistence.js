@@ -1,4 +1,4 @@
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 const uri = "mongodb+srv://Lana:12class34@cluster1.pvhcr.mongodb.net/";
 let client;
 
@@ -25,4 +25,4 @@ async function getDatabase() {
     }
 }
 
-module.exports = { connectDatabase, getDatabase };
+module.exports = { connectDatabase, getDatabase, ObjectId };

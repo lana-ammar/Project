@@ -3,44 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration</title>
+    <title>Welcome</title>
 </head>
 <body>
-    <h1>User Registration</h1>
-
-    <form id="registrationForm">
-      <input type="text" name="name" placeholder="Name" required>
-      <input type="email" name="email" placeholder="Email" required>
-      <input type="text" name="contactNumber" placeholder="Contact Number" required>
-      <input type="text" name="degreeName" placeholder="Degree Name" required>
-      <input type="password" name="password" placeholder="Password" required>
-      <select name="role" required>
-          <option value="student">Student</option>
-          <option value="departmentHead">Department Head</option>
-      </select>
-      <button type="submit">Register</button>
-  </form>
-  
-  <script>
-      document.getElementById('registrationForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const formData = new FormData(e.target);
-          const data = Object.fromEntries(formData.entries());
-  
-          try {
-              const response = await fetch('/register', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(data)
-              });
-              const result = await response.json();
-              console.log('Registration response:', result);
-              alert(result.message || 'Registration successful!');
-          } catch (err) {
-              console.error('Registration failed:', err);
-              alert('Registration failed: ' + err.message);
-          }
-      });
-  </script>
+    <h1>Welcome to the Course Management System</h1>
+    <p>Please select your role:</p>
+    <button onclick="window.location.href='/student-login.html'">Student Login</button>
+    <button onclick="window.location.href='/department-login.html'">Department Head Login</button>
 </body>
 </html>

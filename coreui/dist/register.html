@@ -1,129 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <base href="./">
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <meta name="description" content="CoreUI - Open Source Bootstrap Admin Template">
-    <meta name="author" content="Łukasz Holeczek">
-    <meta name="keyword" content="Bootstrap,Admin,Template,Open,Source,jQuery,CSS,HTML,RWD,Dashboard">
-    <title>Register - Course Management System</title>
-    <link rel="apple-touch-icon" sizes="57x57" href="assets/favicon/apple-icon-57x57.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="assets/favicon/apple-icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="assets/favicon/apple-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="assets/favicon/apple-icon-76x76.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="assets/favicon/apple-icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="assets/favicon/apple-icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="assets/favicon/apple-icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="assets/favicon/apple-icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon/android-icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="96x96" href="assets/favicon/favicon-96x96.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
-    <link rel="manifest" href="assets/favicon/manifest.json">
-    <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" content="assets/favicon/ms-icon-144x144.png">
-    <meta name="theme-color" content="#ffffff">
-    <!-- Vendors styles-->
-    <link rel="stylesheet" href="vendors/simplebar/css/simplebar.css">
-    <link rel="stylesheet" href="css/vendors/simplebar.css">
-    <!-- Main styles for this application-->
-    <link href="css/style.css" rel="stylesheet">
-    <!-- We use those styles to show code examples, you should remove them in your application.-->
-    <link href="css/examples.css" rel="stylesheet">
-  </head>
-  <body>
-    <div class="bg-light min-vh-100 d-flex flex-row align-items-center">
-      <div class="container">
-        <div class="row justify-content-center">
-          <div class="col-md-6">
-            <div class="card mb-4 mx-4">
-              <div class="card-body p-4">
-                <h1>Register</h1>
-                <p class="text-medium-emphasis">Create your account</p>
-                <form id="registerForm">
-                  <div class="input-group mb-3">
-                    <span class="input-group-text">
-                      <svg class="icon">
-                        <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-user"></use>
-                      </svg>
-                    </span>
-                    <input class="form-control" type="text" id="name" name="name" placeholder="Name" required>
-                  </div>
-                  <div class="input-group mb-3">
-                    <span class="input-group-text">
-                      <svg class="icon">
-                        <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-envelope-open"></use>
-                      </svg>
-                    </span>
-                    <input class="form-control" type="email" id="email" name="email" placeholder="Email" required>
-                  </div>
-                  <div class="input-group mb-3">
-                    <span class="input-group-text">
-                      <svg class="icon">
-                        <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-phone"></use>
-                      </svg>
-                    </span>
-                    <input class="form-control" type="text" id="contactNumber" name="contactNumber" placeholder="Contact Number" required>
-                  </div>
-                  <div class="input-group mb-3">
-                    <span class="input-group-text">
-                      <svg class="icon">
-                        <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-education"></use>
-                      </svg>
-                    </span>
-                    <input class="form-control" type="text" id="degreeName" name="degreeName" placeholder="Degree Name" required>
-                  </div>
-                  <div class="input-group mb-4">
-                    <span class="input-group-text">
-                      <svg class="icon">
-                        <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
-                      </svg>
-                    </span>
-                    <input class="form-control" type="password" id="password" name="password" placeholder="Password" required>
-                  </div>
-                  <button class="btn btn-block btn-success" type="submit">Create Account</button>
-                </form>
-                <p id="responseMessage" class="mt-3 text-center"></p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- CoreUI and necessary plugins-->
-    <script src="vendors/@coreui/coreui/js/coreui.bundle.min.js"></script>
-    <script src="vendors/simplebar/js/simplebar.min.js"></script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+</head>
+<body>
+    <h1>Register</h1>
+    <form id="registerForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <label for="contactNumber">Contact Number:</label>
+        <input type="text" id="contactNumber" name="contactNumber" required>
+        <label for="degreeName">Degree Name:</label>
+        <input type="text" id="degreeName" name="degreeName" required>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        <label for="role">Role:</label>
+        <select id="role" name="role" required>
+            <option value="student">Student</option>
+            <option value="department_head">Department Head</option>
+        </select>
+        <button type="submit">Create Account</button>
+    </form>
+    <p>Already have an account? <a href="/index.html">Login</a></p>
+
     <script>
-      // Handle form submission
-      document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const contactNumber = document.getElementById('contactNumber').value;
+            const degreeName = document.getElementById('degreeName').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
 
-        const formData = {
-          name: document.getElementById('name').value,
-          email: document.getElementById('email').value,
-          contactNumber: document.getElementById('contactNumber').value,
-          degreeName: document.getElementById('degreeName').value,
-          password: document.getElementById('password').value
-        };
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, email, contactNumber, degreeName, password, role })
+            });
 
-        try {
-          const response = await fetch('/register', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-          });
-
-          const result = await response.json();
-          document.getElementById('responseMessage').textContent = result.message || result.error;
-        } catch (err) {
-          document.getElementById('responseMessage').textContent = 'An error occurred. Please try again.';
-        }
-      });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+                window.location.href = '/index.html';
+            } else {
+                alert(data.error);
+            }
+        });
     </script>
-  </body>
+</body>
 </html>
