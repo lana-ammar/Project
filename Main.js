@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const presentation = require('./presentation');
 const persistence = require('./persistence');
 
@@ -8,6 +9,9 @@ const app = express();
 // Middleware for JSON and URL-encoded data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from the CoreUI template
+app.use(express.static(path.join(__dirname, 'coreui', 'dist')));
 
 // Use the routes
 app.use('/', presentation);

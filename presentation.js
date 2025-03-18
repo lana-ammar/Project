@@ -1,10 +1,15 @@
+const path = require('path');
+
 const express = require('express');
 const router = express.Router();
 const business = require('./business');
 
-/**
- * Route to register a user.
- */
+// Root route to serve the main page
+router.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'coreui_dist(1)', 'dist', 'index.html'));
+});
+
+// Other routes (register, verify, profile)
 router.post('/register', async (req, res) => {
     const { name, email, contactNumber, degreeName, password } = req.body;
     try {
@@ -15,9 +20,6 @@ router.post('/register', async (req, res) => {
     }
 });
 
-/**
- * Route to verify email.
- */
 router.get('/verify/:token', async (req, res) => {
     try {
         const response = await business.verifyEmail(req.params.token);
@@ -27,9 +29,6 @@ router.get('/verify/:token', async (req, res) => {
     }
 });
 
-/**
- * Route to get user profile (Example: /profile?userId=123).
- */
 router.get('/profile', async (req, res) => {
     const { userId } = req.query;
     try {

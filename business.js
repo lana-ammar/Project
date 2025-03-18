@@ -1,17 +1,11 @@
-const express = require('express');
-const exphbs = require('express-handlebars');
-const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
-const dotenv = require('dotenv');
+const { getDatabase } = require('./persistence');
 const { ObjectId } = require('mongodb');
-
-dotenv.config();
 
 /**
  * Registers a new user and sends a verification email.
  */
 async function registerUser(name, email, contactNumber, degreeName, password) {
-    const db = await mongoose.connection.db;
+    const db = await getDatabase();
     const usersCollection = db.collection('users');
 
     const existingUser = await usersCollection.findOne({ email });
@@ -28,7 +22,7 @@ async function registerUser(name, email, contactNumber, degreeName, password) {
     };
 
     await usersCollection.insertOne(user);
-    
+
     // Simulated email (replace with actual email service if needed)
     console.log(`Verification email sent: http://localhost:8000/verify/${user.verificationToken}`);
     
@@ -39,7 +33,7 @@ async function registerUser(name, email, contactNumber, degreeName, password) {
  * Verifies the user's email using the token.
  */
 async function verifyEmail(token) {
-    const db = await mongoose.connection.db;
+    const db = await getDatabase();
     const usersCollection = db.collection('users');
 
     const user = await usersCollection.findOne({ verificationToken: token });
@@ -57,7 +51,7 @@ async function verifyEmail(token) {
  * Fetches a user profile.
  */
 async function getUserProfile(userId) {
-    const db = await mongoose.connection.db;
+    const db = await getDatabase();
     const usersCollection = db.collection('users');
 
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) }, { projection: { password: 0 } });
