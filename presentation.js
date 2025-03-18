@@ -1,19 +1,18 @@
 const path = require('path');
-
 const express = require('express');
 const router = express.Router();
 const business = require('./business');
 
 // Root route to serve the main page
 router.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'coreui_dist(1)', 'dist', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'coreui', 'dist', 'index.html'));
 });
 
 // Other routes (register, verify, profile)
 router.post('/register', async (req, res) => {
-    const { name, email, contactNumber, degreeName, password } = req.body;
+    const { name, email, contactNumber, degreeName, password, role } = req.body;
     try {
-        const response = await business.registerUser(name, email, contactNumber, degreeName, password);
+        const response = await business.registerUser(name, email, contactNumber, degreeName, password, role);
         res.json(response);
     } catch (err) {
         res.status(400).json({ error: err.message });

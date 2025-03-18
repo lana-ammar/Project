@@ -1,24 +1,28 @@
 const { MongoClient } = require('mongodb');
-
 const uri = "mongodb+srv://Lana:12class34@cluster1.pvhcr.mongodb.net/";
 let client;
 
-/**
- * Connects to MongoDB.
- */
 async function connectDatabase() {
     if (!client) {
-        client = new MongoClient(uri);
-        await client.connect();
+        try {
+            client = new MongoClient(uri);
+            await client.connect();
+            console.log('MongoDB connected successfully');
+        } catch (err) {
+            console.error('MongoDB connection failed:', err);
+            throw err;
+        }
     }
 }
 
-/**
- * Gets the database instance.
- */
 async function getDatabase() {
-    await connectDatabase();
-    return client.db('course_management');
+    try {
+        await connectDatabase();
+        return client.db('course_management');
+    } catch (err) {
+        console.error('Failed to get database:', err);
+        throw err;
+    }
 }
 
 module.exports = { connectDatabase, getDatabase };

@@ -1,63 +1,75 @@
-const { getDatabase } = require('./persistence');
-const { ObjectId } = require('mongodb');
+const persistence = require('./persistence');
+const bcrypt = require('bcrypt');
 
-/**
- * Registers a new user and sends a verification email.
- */
-async function registerUser(name, email, contactNumber, degreeName, password) {
-    const db = await getDatabase();
-    const usersCollection = db.collection('users');
+async function registerUser(name, email, contactNumber, degreeName, password, role) {
+    try {
+        // Validate input
+        if (!name || !email || !contactNumber || !degreeName || !password || !role) {
+            throw new Error('All fields are required');
+        }
 
-    const existingUser = await usersCollection.findOne({ email });
-    if (existingUser) throw new Error('Email already registered');
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = {
-        name,
-        email,
-        contactNumber,
-        degreeName,
-        password, // Store plain text for now (NOT recommended for production)
-        emailVerified: false,
-        verificationToken: Math.random().toString(36).substr(2, 20) // Simple token generation
-    };
+        // Save user to database
+        const db = await persistence.getDatabase();
+        const user = {
+            name,
+            email,
+            contactNumber,
+            degreeName,
+            password: hashedPassword,
+            role,
+            emailVerified: false,
+            verificationToken: generateVerificationToken() // Implement this function
+        };
 
-    await usersCollection.insertOne(user);
-
-    // Simulated email (replace with actual email service if needed)
-    console.log(`Verification email sent: http://localhost:8000/verify/${user.verificationToken}`);
-    
-    return { message: "Registration successful, check your email for verification link." };
+        const result = await db.collection('users').insertOne(user);
+        console.log('User inserted successfully:', result.insertedId);
+        return { message: 'User registered successfully', userId: result.insertedId };
+    } catch (err) {
+        console.error('Error in registerUser:', err);
+        throw err;
+    }
 }
 
-/**
- * Verifies the user's email using the token.
- */
 async function verifyEmail(token) {
-    const db = await getDatabase();
-    const usersCollection = db.collection('users');
+    try {
+        const db = await persistence.getDatabase();
+        const user = await db.collection('users').findOne({ verificationToken: token });
+        if (!user) {
+            throw new Error('Invalid token');
+        }
 
-    const user = await usersCollection.findOne({ verificationToken: token });
-    if (!user) throw new Error('Invalid or expired token');
+        await db.collection('users').updateOne(
+            { _id: user._id },
+            { $set: { emailVerified: true } }
+        );
 
-    await usersCollection.updateOne(
-        { _id: user._id },
-        { $set: { emailVerified: true }, $unset: { verificationToken: "" } }
-    );
-
-    return { message: "Email verified successfully. You can now log in." };
+        return { message: 'Email verified successfully' };
+    } catch (err) {
+        console.error('Error in verifyEmail:', err);
+        throw err;
+    }
 }
 
-/**
- * Fetches a user profile.
- */
 async function getUserProfile(userId) {
-    const db = await getDatabase();
-    const usersCollection = db.collection('users');
+    try {
+        const db = await persistence.getDatabase();
+        const user = await db.collection('users').findOne({ _id: userId });
+        if (!user) {
+            throw new Error('User not found');
+        }
 
-    const user = await usersCollection.findOne({ _id: new ObjectId(userId) }, { projection: { password: 0 } });
-    if (!user) throw new Error('User not found');
+        return user;
+    } catch (err) {
+        console.error('Error in getUserProfile:', err);
+        throw err;
+    }
+}
 
-    return user;
+function generateVerificationToken() {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
 module.exports = { registerUser, verifyEmail, getUserProfile };
