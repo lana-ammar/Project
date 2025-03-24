@@ -14,7 +14,7 @@ async function addDepartmentHead() {
         const email = "head@udst.edu.qa";
         const contactNumber = "12345678";
         const degreeName = "Administration";
-        const password = "12class34"; // Replace with the actual password
+        const password = "12class34";
         const role = "department_head";
 
         // Hash the password
