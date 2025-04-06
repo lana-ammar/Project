@@ -1,14 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Course Management System - Login</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f0f2f5; }
+    h1 { text-align: center; }
+    form {
+      max-width: 400px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #message {
+      color: red;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-    <h1>Welcome to the Course Management System</h1>
-    <p>Please select your role:</p>
-    <button onclick="window.location.href='/student-login.html'">Student Login</button>
-    <button onclick="window.location.href='/department-login.html'">Department Head Login</button>
+  <h1>Login to Course Management System</h1>
+  <form id="loginForm">
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required />
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required />
+
+    <label for="role">Select Role:</label>
+    <select id="role" name="role" required>
+      <option value="">--Select Role--</option>
+      <option value="student">Student</option>
+      <option value="department_head">Department Head</option>
+    </select>
+
+    <button type="submit">Sign In</button>
+  </form>
+
+  <p id="message"></p>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const role = document.getElementById('role').value;
+
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, role })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          window.location.href = data.redirect;
+        } else {
+          document.getElementById('message').textContent = data.error;
+        }
+      } catch (err) {
+        document.getElementById('message').textContent = 'Login failed. Try again later.';
+        console.error(err);
+      }
+    });
+  </script>
 </body>
 </html>
