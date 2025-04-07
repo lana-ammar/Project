@@ -2,36 +2,29 @@ const path = require('path');
 const express = require('express');
 const router = express.Router();
 const business = require('./business');
+const persistence = require('./persistence');
 
-// Middleware to protect pages
-function isAuthenticated(req, res, next) {
-    if (req.session.user) {
+// Middleware for auth
+function isAuthenticated(role) {
+    return async (req, res, next) => {
+        const sessionKey = req.cookies.sessionKey;
+        const session = await persistence.getSession(sessionKey);
+        if (!session || !session.Data) return res.redirect('/login.html');
+        if (role && session.Data.role !== role) return res.status(403).send('Forbidden');
+        req.user = session.Data;
         next();
-    } else {
-        res.status(401).json({ error: 'Unauthorized. Please login.' });
-    }
+    };
 }
 
-// Serve homepage
+// Home page
 router.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'coreui', 'dist', 'index.html'));
+    res.sendFile(path.join(__dirname, 'coreui', 'dist', 'index.html'));
 });
 
 // Register
 router.post('/register', async (req, res) => {
-    const { name, email, contactNumber, degreeName, password, role } = req.body;
     try {
-        const result = await business.registerUser(name, email, contactNumber, degreeName, password, role);
-        res.json(result);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-
-// Email verification
-router.get('/verify/:token', async (req, res) => {
-    try {
-        const result = await business.verifyEmail(req.params.token);
+        const result = await business.registerUser(...Object.values(req.body));
         res.json(result);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -40,17 +33,14 @@ router.get('/verify/:token', async (req, res) => {
 
 // Login
 router.post('/login', async (req, res) => {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
     try {
-        const user = await business.loginUser(email, password, role);
-        req.session.user = user;
-
-        if (user.role === 'student') {
+        const sessionInfo = await business.loginUser(email, password);
+        res.cookie('sessionKey', sessionInfo.uuid, { httpOnly: true, maxAge: 1000 * 60 * 10 });
+        if (sessionInfo.role === 'student') {
             res.json({ redirect: '/student.html' });
-        } else if (user.role === 'department_head') {
+        } else if (sessionInfo.role === 'department_head') {
             res.json({ redirect: '/department-head.html' });
-        } else {
-            res.status(400).json({ error: 'Invalid role' });
         }
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -58,22 +48,21 @@ router.post('/login', async (req, res) => {
 });
 
 // Protected student page
-router.get('/student.html', isAuthenticated, (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'coreui', 'dist', 'student.html'));
+router.get('/student.html', isAuthenticated('student'), (req, res) => {
+    res.sendFile(path.join(__dirname, 'coreui', 'dist', 'student.html'));
 });
 
 // Protected department head page
-router.get('/department-head.html', isAuthenticated, (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'coreui', 'dist', 'department-head.html'));
+router.get('/department-head.html', isAuthenticated('department_head'), (req, res) => {
+    res.sendFile(path.join(__dirname, 'coreui', 'dist', 'department-head.html'));
 });
 
 // Logout
-router.post('/logout', (req, res) => {
-    req.session.destroy(err => {
-        if (err) return res.status(500).json({ error: 'Logout failed' });
-        res.clearCookie('connect.sid');
-        res.json({ message: 'Logged out successfully' });
-    });
+router.post('/logout', async (req, res) => {
+    const sessionKey = req.cookies.sessionKey;
+    await persistence.deleteSession(sessionKey);
+    res.clearCookie('sessionKey');
+    res.json({ message: 'Logged out' });
 });
 
 module.exports = router;

@@ -1,35 +1,33 @@
 const express = require('express');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 const presentation = require('./presentation');
 const persistence = require('./persistence');
-const session = require('express-session');
 
 const app = express();
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-// Session
-app.use(session({
-    secret: 'your_secret_key',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Set to true if using HTTPS
-}));
-
-// Static files
+// Serve static files
 app.use(express.static(path.join(__dirname, 'coreui', 'dist')));
 
-// Protect HTML access via session
-app.use((req, res, next) => {
-    if (!req.session.user && req.path.endsWith('.html') && req.path !== '/login.html') {
-        return res.redirect('/login.html');
+// Protect access to static pages
+app.use(async (req, res, next) => {
+    const publicPages = ['/', '/login.html'];
+    if (req.path.endsWith('.html') && !publicPages.includes(req.path)) {
+        const sessionKey = req.cookies.sessionKey;
+        if (!sessionKey) return res.redirect('/login.html');
+
+        const sessionData = await persistence.getSession(sessionKey);
+        if (!sessionData) return res.redirect('/login.html');
+
+        req.user = sessionData.Data; // Attach user data to request
     }
     next();
 });
 
-// Routes
 app.use('/', presentation);
 
 // Connect DB
@@ -38,5 +36,4 @@ persistence.connectDatabase()
     .catch(err => console.error('MongoDB connection failed:', err));
 
 // Start server
-const PORT = 8000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(8000, () => console.log('Server running on port 8000'));
