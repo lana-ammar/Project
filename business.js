@@ -17,14 +17,20 @@ async function registerUser(name, email, degreeName, password, role) {
         degreeName,
         password: hashedPassword,
         role,
-        emailVerified: false,
+        emailVerified: true, // Changed from false to true for testing
         verificationToken: token,
         createdAt: new Date()
     };
 
     await db.collection('users').insertOne(user);
-    console.log(`Verification link: http://localhost:8000/verify/${token}`);
-    return { message: 'Registered. Please verify your email.' };
+    console.log(`[DEV MODE] Email automatically verified for ${email}`);
+    return { message: 'Registration successful. You can now login.' };
+}
+
+
+
+function generateVerificationToken() {
+    return crypto.randomBytes(20).toString('hex');
 }
 
 async function loginUser(email, password) {
@@ -34,7 +40,9 @@ async function loginUser(email, password) {
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new Error('Invalid password');
-    if (!user.emailVerified) throw new Error('Email not verified');
+    
+    // Temporarily comment out this check for testing
+    // if (!user.emailVerified) throw new Error('Email not verified');
 
     const uuid = crypto.randomUUID();
     const expiry = new Date(Date.now() + 1000 * 60 * 10); // 10 minutes

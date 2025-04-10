@@ -113,32 +113,32 @@
       document.getElementById('loginForm').classList.remove('hidden');
     });
 
-    // Login form submission (without role)
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    // Login form submission
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-      try {
+    try {
         const res = await fetch('/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
         });
 
         const data = await res.json();
 
         if (res.ok) {
-          window.location.href = data.redirect;
+            window.location.href = data.redirect || '/';
         } else {
-          document.getElementById('message').textContent = data.error;
+            document.getElementById('message').textContent = data.error;
         }
-      } catch (err) {
+    } catch (err) {
         document.getElementById('message').textContent = 'Login failed. Try again later.';
         console.error(err);
-      }
-    });
+    }
+});
 
     // Registration form submission
     document.getElementById('registerForm').addEventListener('submit', async (e) => {

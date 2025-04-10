@@ -17,8 +17,18 @@ function isAuthenticated(role) {
 }
 
 // Home page
-router.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'coreui', 'dist', 'index.html'));
+// Development-only email verification endpoint
+router.get('/dev-verify/:email', async (req, res) => {
+    try {
+        const db = await persistence.getDatabase();
+        await db.collection('users').updateOne(
+            { email: req.params.email },
+            { $set: { emailVerified: true } }
+        );
+        res.json({ message: `Email ${req.params.email} verified for development` });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 // Register
@@ -37,11 +47,16 @@ router.post('/login', async (req, res) => {
     try {
         const sessionInfo = await business.loginUser(email, password);
         res.cookie('sessionKey', sessionInfo.uuid, { httpOnly: true, maxAge: 1000 * 60 * 10 });
+        
+        // Determine redirect based on role
+        let redirectUrl = '/';
         if (sessionInfo.role === 'student') {
-            res.json({ redirect: '/student.html' });
+            redirectUrl = '/student.html';
         } else if (sessionInfo.role === 'department_head') {
-            res.json({ redirect: '/department-head.html' });
+            redirectUrl = '/department-head.html';
         }
+        
+        res.json({ redirect: redirectUrl });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
