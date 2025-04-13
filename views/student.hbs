@@ -1,0 +1,116 @@
+<h1>Student Dashboard</h1>
+
+<div style="text-align: right; margin-bottom: 20px;">
+    <form action="/logout" method="POST" style="display:inline;">
+        <input type="hidden" name="_csrf" value="{{csrfToken}}">
+        <button type="submit" class="btn btn-primary">Logout</button>
+    </form>
+</div>
+
+{{#if message}}
+    <div class="alert alert-danger">{{message}}</div>
+{{/if}}
+
+<!-- Request Submission Form -->
+<div class="card">
+    <div class="card-header">Submit a Request</div>
+    <div class="card-body">
+        <form action="/requests/submit" method="POST" onsubmit="return validateRequestForm()">
+            <input type="hidden" name="_csrf" value="{{csrfToken}}">
+            <div>
+                <label for="category" class="form-label">Request Category</label>
+                <select class="form-select" id="category" name="category" required>
+                    <option value="">Select a category</option>
+                    <option value="Change Section">Change Section</option>
+                    <option value="Register Over Cap">Register Over Cap</option>
+                    <option value="Capstone Registration">Capstone Registration</option>
+                </select>
+            </div>
+            <div>
+                <label for="semester" class="form-label">Semester</label>
+                <select class="form-select" id="semester" name="semester" required>
+                    <option value="">Select a semester</option>
+                    <option value="Fall 2024">Fall 2024</option>
+                    <option value="Winter 2025">Winter 2025</option>
+                    <option value="Spring 2025">Spring 2025</option>
+                </select>
+            </div>
+            <div>
+                <label for="details" class="form-label">Details</label>
+                <textarea class="form-control" id="details" name="details" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Request</button>
+        </form>
+    </div>
+</div>
+
+<!-- Request History -->
+<div class="card">
+    <div class="card-header">Request History</div>
+    <div class="card-body">
+        <form action="/student" method="GET" class="mb-3">
+            <div class="row">
+                <div class="col-md-4">
+                    <select class="form-select" name="semester" onchange="this.form.submit()">
+                        <option value="">All Semesters</option>
+                        <option value="Fall 2024" {{#if (eq semester "Fall 2024")}}selected{{/if}}>Fall 2024</option>
+                        <option value="Winter 2025" {{#if (eq semester "Winter 2025")}}selected{{/if}}>Winter 2025</option>
+                        <option value="Spring 2025" {{#if (eq semester "Spring 2025")}}selected{{/if}}>Spring 2025</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Semester</th>
+                    <th>Details</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th>Estimated Completion</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each requests}}
+                    <tr>
+                        <td>{{this.category}}</td>
+                        <td>{{this.semester}}</td>
+                        <td>{{this.details}}</td>
+                        <td>{{this.status}}</td>
+                        <td>{{formatDate this.createdAt}}</td>
+                        <td>{{#if this.estimatedCompletion}}{{formatDate this.estimatedCompletion}}{{else}}N/A{{/if}}</td>
+                        <td>
+                            {{#if (eq this.status "Pending")}}
+                                <form action="/requests/cancel/{{this._id}}" method="POST" style="display:inline;">
+                                    <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+                                    <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                                </form>
+                            {{/if}}
+                        </td>
+                    </tr>
+                {{else}}
+                    <tr>
+                        <td colspan="7">No requests found.</td>
+                    </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{#section 'scripts'}}
+    <script>
+        function validateRequestForm() {
+            const category = document.getElementById('category').value;
+            const semester = document.getElementById('semester').value;
+            const details = document.getElementById('details').value.trim();
+            if (!category || !semester || !details) {
+                alert('All fields are required.');
+                return false;
+            }
+            return true;
+        }
+    </script>
+{{/section}}

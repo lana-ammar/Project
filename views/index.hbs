@@ -1,0 +1,27 @@
+<h1>Course Management System</h1>
+
+{{#if message}}
+    <div class="alert alert-danger">{{message}}</div>
+{{/if}}
+
+<!-- Login Form -->
+<div class="card">
+    <div class="card-header">Login</div>
+    <div class="card-body">
+        <form id="loginForm" action="/login" method="POST">
+            <input type="hidden" name="_csrf" value="{{csrfToken}}">
+            <div>
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" name="email" class="form-control" required>
+            </div>
+            <div>
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Sign In</button>
+        </form>
+        <div class="toggle-form">
+            <p>Don't have an account? <a href="/register">Register here</a></p>
+        </div>
+    </div>
+</div>
