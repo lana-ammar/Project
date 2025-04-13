@@ -27,8 +27,6 @@ async function registerUser(name, email, degreeName, password, role) {
     return { message: 'Registration successful. You can now login.' };
 }
 
-
-
 function generateVerificationToken() {
     return crypto.randomBytes(20).toString('hex');
 }
@@ -63,4 +61,31 @@ async function verifyEmail(token) {
     return { message: 'Email verified' };
 }
 
-module.exports = { registerUser, loginUser, verifyEmail };
+// New functions for session management
+async function getSession(sessionKey) {
+    return await persistence.getSession(sessionKey);
+}
+
+async function deleteSession(sessionKey) {
+    await persistence.deleteSession(sessionKey);
+}
+
+// New function for dev email verification
+async function verifyEmailDev(email) {
+    const db = await persistence.getDatabase();
+    const result = await db.collection('users').updateOne(
+        { email },
+        { $set: { emailVerified: true } }
+    );
+    if (result.modifiedCount === 0) throw new Error('User not found or already verified');
+    return { message: `Email ${email} verified for development` };
+}
+
+module.exports = {
+    registerUser,
+    loginUser,
+    verifyEmail,
+    getSession,
+    deleteSession,
+    verifyEmailDev
+};
