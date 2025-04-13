@@ -12,8 +12,34 @@
 {{/if}}
 
 <div class="card">
-    <div class="card-header">Pending Requests</div>
+    <div class="card-header">Request Queues</div>
     <div class="card-body">
-        <p>Pending requests will be displayed here.</p>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Pending Requests</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each queues}}
+                    <tr>
+                        <td>{{this.category}}</td>
+                        <td>{{this.count}}</td>
+                        <td>
+                            <a href="/department-head/queue/{{this.category}}" class="btn btn-primary btn-sm">View Queue</a>
+                        </td>
+                    </tr>
+                {{else}}
+                    <tr>
+                        <td colspan="3">No pending requests.</td>
+                    </tr>
+                {{/each}}
+            </tbody>
+        </table>
+        <div style="margin-top: 20px;">
+            <a href="/department-head/random-request" class="btn btn-primary">I don't know where to begin!</a>
+        </div>
     </div>
 </div>

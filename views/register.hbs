@@ -1,17 +1,16 @@
-<h1>Course Management System</h1>
+<h1>Register</h1>
 
 {{#if message}}
     <div class="alert alert-danger">{{message}}</div>
 {{/if}}
 
-<!-- Registration Form -->
 <div class="card">
-    <div class="card-header">Register</div>
+    <div class="card-header">Create an Account</div>
     <div class="card-body">
-        <form id="registerForm" action="/register" method="POST">
+        <form action="/register" method="POST">
             <input type="hidden" name="_csrf" value="{{csrfToken}}">
             <div>
-                <label for="name" class="form-label">Full Name</label>
+                <label for="name" class="form-label">Name</label>
                 <input type="text" id="name" name="name" class="form-control" required>
             </div>
             <div>
@@ -27,9 +26,8 @@
                 <input type="password" id="password" name="password" class="form-control" required>
             </div>
             <div>
-                <label for="role" class="form-label">Select Role</label>
+                <label for="role" class="form-label">Role</label>
                 <select id="role" name="role" class="form-select" required>
-                    <option value="">--Select Role--</option>
                     <option value="student">Student</option>
                     <option value="department_head">Department Head</option>
                 </select>

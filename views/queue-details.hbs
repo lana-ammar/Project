@@ -1,0 +1,43 @@
+<h1>Requests in {{category}}</h1>
+
+<div style="text-align: right; margin-bottom: 20px;">
+    <a href="/department-head" class="btn btn-primary">Back to Dashboard</a>
+</div>
+
+{{#if message}}
+    <div class="alert alert-danger">{{message}}</div>
+{{/if}}
+
+<div class="card">
+    <div class="card-header">Pending Requests</div>
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Semester</th>
+                    <th>Details</th>
+                    <th>Submitted</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each requests}}
+                    <tr>
+                        <td>{{this.student.name}}</td>
+                        <td>{{this.semester}}</td>
+                        <td>{{this.details}}</td>
+                        <td>{{formatDate this.createdAt}}</td>
+                        <td>
+                            <a href="/department-head/request/{{this._id}}" class="btn btn-primary btn-sm">View</a>
+                        </td>
+                    </tr>
+                {{else}}
+                    <tr>
+                        <td colspan="5">No pending requests in this queue.</td>
+                    </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>

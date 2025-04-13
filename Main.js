@@ -61,16 +61,21 @@ function verifyCsrfToken(req, res, next) {
 // Middleware for auth
 function isAuthenticated(role) {
     return async (req, res, next) => {
-        const sessionKey = req.cookies.sessionKey;
-        const session = await business.getSession(sessionKey);
-        if (!session || !session.Data) {
-            return res.redirect('/');
+        try {
+            const sessionKey = req.cookies.sessionKey;
+            const session = await business.getSession(sessionKey);
+            if (!session || !session.Data) {
+                return res.redirect('/');
+            }
+            if (role && session.Data.role !== role) {
+                return res.status(403).send('Forbidden');
+            }
+            req.user = session.Data;
+            next();
+        } catch (err) {
+            console.error('Authentication error:', err.message);
+            res.redirect('/');
         }
-        if (role && session.Data.role !== role) {
-            return res.status(403).send('Forbidden');
-        }
-        req.user = session.Data;
-        next();
     };
 }
 
@@ -83,12 +88,32 @@ router.get('/register', (req, res) => {
     res.render('register', { title: 'Register', csrfToken: req.csrfToken });
 });
 
+// Email verification route
+router.get('/verify/:token', async (req, res) => {
+    try {
+        const result = await business.verifyEmail(req.params.token);
+        res.render('index', {
+            title: 'Login',
+            message: result.message,
+            csrfToken: req.csrfToken
+        });
+    } catch (err) {
+        console.error('Verify error:', err.message);
+        res.render('index', {
+            title: 'Login',
+            message: err.message,
+            csrfToken: req.csrfToken
+        });
+    }
+});
+
 // Development-only email verification
 router.get('/dev-verify/:email', async (req, res) => {
     try {
         const result = await business.verifyEmailDev(req.params.email);
         res.json(result);
     } catch (err) {
+        console.error('Dev-verify error:', err.message);
         res.status(400).json({ error: err.message });
     }
 });
@@ -96,13 +121,15 @@ router.get('/dev-verify/:email', async (req, res) => {
 // Register
 router.post('/register', verifyCsrfToken, async (req, res) => {
     try {
-        const result = await business.registerUser(...Object.values(req.body));
+        const { name, email, degreeName, password, role } = req.body;
+        const result = await business.registerUser(name, email, degreeName, password, role);
         res.render('index', {
             title: 'Login',
             message: result.message,
             csrfToken: req.csrfToken
         });
     } catch (err) {
+        console.error('Register error:', err.message);
         res.status(400).render('register', {
             title: 'Register',
             message: err.message,
@@ -126,6 +153,7 @@ router.post('/login', verifyCsrfToken, async (req, res) => {
             res.redirect('/');
         }
     } catch (err) {
+        console.error('Login error:', err.message);
         res.status(400).render('index', {
             title: 'Login',
             message: err.message,
@@ -147,6 +175,7 @@ router.get('/student', isAuthenticated('student'), async (req, res) => {
             csrfToken: req.csrfToken
         });
     } catch (err) {
+        console.error('Student dashboard error:', err.message);
         res.render('student', {
             title: 'Student Dashboard',
             message: err.message,
@@ -164,6 +193,7 @@ router.post('/requests/submit', isAuthenticated('student'), verifyCsrfToken, asy
         await business.submitRequest(studentId, category, semester, details);
         res.redirect('/student');
     } catch (err) {
+        console.error('Request submission error:', err.message);
         const requests = await business.getStudentRequests(req.user._id, req.query.semester || '');
         res.status(400).render('student', {
             title: 'Student Dashboard',
@@ -183,6 +213,7 @@ router.post('/requests/cancel/:requestId', isAuthenticated('student'), verifyCsr
         await business.cancelRequest(studentId, requestId);
         res.redirect('/student');
     } catch (err) {
+        console.error('Request cancellation error:', err.message);
         const requests = await business.getStudentRequests(req.user._id, req.query.semester || '');
         res.status(400).render('student', {
             title: 'Student Dashboard',
@@ -194,23 +225,144 @@ router.post('/requests/cancel/:requestId', isAuthenticated('student'), verifyCsr
     }
 });
 
-// Department head dashboard (placeholder)
-router.get('/department-head', isAuthenticated('department_head'), (req, res) => {
-    res.render('department-head', {
-        title: 'Department Head Dashboard',
-        csrfToken: req.csrfToken
-    });
+// Department head dashboard
+router.get('/department-head', isAuthenticated('department_head'), async (req, res) => {
+    try {
+        const queues = await business.getRequestQueues();
+        res.render('department-head', {
+            title: 'Department Head Dashboard',
+            queues,
+            csrfToken: req.csrfToken
+        });
+    } catch (err) {
+        console.error('Department head dashboard error:', err.message);
+        res.render('department-head', {
+            title: 'Department Head Dashboard',
+            message: err.message,
+            queues: [],
+            csrfToken: req.csrfToken
+        });
+    }
+});
+
+// View requests in a specific queue
+router.get('/department-head/queue/:category', isAuthenticated('department_head'), async (req, res) => {
+    try {
+        const category = decodeURIComponent(req.params.category);
+        const requests = await business.getRequestsByCategory(category);
+        res.render('queue-details', {
+            title: `Requests in ${category}`,
+            category,
+            requests,
+            csrfToken: req.csrfToken
+        });
+    } catch (err) {
+        console.error('Queue details error:', err.message);
+        res.render('queue-details', {
+            title: `Requests in ${req.params.category}`,
+            message: err.message,
+            category: req.params.category,
+            requests: [],
+            csrfToken: req.csrfToken
+        });
+    }
+});
+
+// View a specific request
+router.get('/department-head/request/:requestId', isAuthenticated('department_head'), async (req, res) => {
+    try {
+        const requestId = req.params.requestId;
+        const request = await business.getRequestById(requestId);
+        if (!request) throw new Error('Request not found');
+        res.render('request-details', {
+            title: 'Request Details',
+            request,
+            csrfToken: req.csrfToken
+        });
+    } catch (err) {
+        console.error('Request details error:', err.message);
+        res.render('request-details', {
+            title: 'Request Details',
+            message: err.message,
+            request: null,
+            csrfToken: req.csrfToken
+        });
+    }
+});
+
+// Process a request (resolve or reject)
+router.post('/department-head/request/:requestId/process', isAuthenticated('department_head'), verifyCsrfToken, async (req, res) => {
+    try {
+        const { requestId } = req.params;
+        const { action, note } = req.body; // action: 'resolve' or 'reject'
+        await business.processRequest(requestId, action, note);
+        res.redirect('/department-head');
+    } catch (err) {
+        console.error('Process request error:', err.message);
+        res.render('request-details', {
+            title: 'Request Details',
+            message: err.message,
+            request: await business.getRequestById(req.params.requestId),
+            csrfToken: req.csrfToken
+        });
+    }
+});
+
+// "I don't know where to begin!" - Random request
+router.get('/department-head/random-request', isAuthenticated('department_head'), async (req, res) => {
+    try {
+        const request = await business.getRandomPendingRequest();
+        if (!request) throw new Error('No pending requests available');
+        res.redirect(`/department-head/request/${request._id}`);
+    } catch (err) {
+        console.error('Random request error:', err.message);
+        const queues = await business.getRequestQueues();
+        res.render('department-head', {
+            title: 'Department Head Dashboard',
+            message: err.message,
+            queues,
+            csrfToken: req.csrfToken
+        });
+    }
 });
 
 // Logout
 router.post('/logout', verifyCsrfToken, async (req, res) => {
-    const sessionKey = req.cookies.sessionKey;
-    await business.deleteSession(sessionKey);
-    res.clearCookie('sessionKey');
-    res.clearCookie('csrfToken');
-    res.redirect('/');
+    try {
+        const sessionKey = req.cookies.sessionKey;
+        await business.deleteSession(sessionKey);
+        res.clearCookie('sessionKey');
+        res.clearCookie('csrfToken');
+        res.redirect('/');
+    } catch (err) {
+        console.error('Logout error:', err.message);
+        res.redirect('/');
+    }
+});
+
+// Global error handler to prevent server crashes
+app.use((err, req, res, next) => {
+    console.error('Server error:', err.message);
+    res.status(500).render('index', {
+        title: 'Login',
+        message: 'An unexpected error occurred. Please try again.',
+        csrfToken: req.csrfToken
+    });
 });
 
 app.use('/', router);
 
-app.listen(8000, () => console.log('Server running on port 8000'));
+// Start the server
+const PORT = 8000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+
+// Handle uncaught exceptions to prevent server crashes
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err.message);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});

@@ -1,0 +1,54 @@
+<h1>Request Details</h1>
+
+<div style="text-align: right; margin-bottom: 20px;">
+    <a href="/department-head" class="btn btn-primary">Back to Dashboard</a>
+</div>
+
+{{#if message}}
+    <div class="alert alert-danger">{{message}}</div>
+{{/if}}
+
+{{#if request}}
+    <div class="card">
+        <div class="card-header">Request Information</div>
+        <div class="card-body">
+            <p><strong>Student:</strong> {{request.student.name}}</p>
+            <p><strong>Email:</strong> {{request.student.email}}</p>
+            <p><strong>Category:</strong> {{request.category}}</p>
+            <p><strong>Semester:</strong> {{request.semester}}</p>
+            <p><strong>Details:</strong> {{request.details}}</p>
+            <p><strong>Submitted:</strong> {{formatDate request.createdAt}}</p>
+            <p><strong>Estimated Completion:</strong> {{#if request.estimatedCompletion}}{{formatDate request.estimatedCompletion}}{{else}}N/A{{/if}}</p>
+        </div>
+    </div>
+
+    {{#if (eq request.status "Pending")}}
+        <div class="card">
+            <div class="card-header">Process Request</div>
+            <div class="card-body">
+                <form action="/department-head/request/{{request._id}}/process" method="POST">
+                    <input type="hidden" name="_csrf" value="{{csrfToken}}">
+                    <div>
+                        <label for="note" class="form-label">Note</label>
+                        <textarea class="form-control" id="note" name="note" rows="4" required></textarea>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <button type="submit" name="action" value="resolve" class="btn btn-primary">Resolve</button>
+                        <button type="submit" name="action" value="reject" class="btn btn-danger">Reject</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {{else}}
+        <div class="card">
+            <div class="card-header">Request Status</div>
+            <div class="card-body">
+                <p><strong>Status:</strong> {{request.status}}</p>
+                <p><strong>Note:</strong> {{request.note}}</p>
+                <p><strong>Updated:</strong> {{formatDate request.updatedAt}}</p>
+            </div>
+        </div>
+    {{/if}}
+{{else}}
+    <p>Request not found.</p>
+{{/if}}

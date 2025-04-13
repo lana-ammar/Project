@@ -3,7 +3,14 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
 async function registerUser(name, email, degreeName, password, role) {
+    const validRoles = ['student', 'department_head'];
+    if (!validRoles.includes(role)) {
+        throw new Error('Invalid role');
+    }
     const db = await persistence.getDatabase();
+
+    // Normalize email to lowercase
+    email = email.toLowerCase();
 
     const existingUser = await db.collection('users').findOne({ email });
     if (existingUser) throw new Error('Email already registered');
@@ -13,18 +20,22 @@ async function registerUser(name, email, degreeName, password, role) {
 
     const user = {
         name,
-        email,
+        email, // Already normalized
         degreeName,
         password: hashedPassword,
-        role,
-        emailVerified: true, // For testing
+        role, // Fixed typo: was "role36"
+        emailVerified: false,
         verificationToken: token,
         createdAt: new Date()
     };
 
     await db.collection('users').insertOne(user);
-    console.log(`[DEV MODE] Email automatically verified for ${email}`);
-    return { message: 'Registration successful. You can now login.' };
+    console.log(`[EMAIL SIMULATION] Verification email sent:
+        To: ${email}
+        Subject: Verify Your Email
+        Body: Please verify your email by visiting http://localhost:8000/verify/${token}
+    `);
+    return { message: 'Registration successful. Please verify your email to login.' };
 }
 
 function generateVerificationToken() {
@@ -33,8 +44,13 @@ function generateVerificationToken() {
 
 async function loginUser(email, password) {
     const db = await persistence.getDatabase();
+    // Normalize email to lowercase
+    email = email.toLowerCase();
+
     const user = await db.collection('users').findOne({ email });
     if (!user) throw new Error('User not found');
+
+    if (!user.emailVerified) throw new Error('Email not verified. Please verify your email to login.');
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new Error('Invalid password');
@@ -53,9 +69,14 @@ async function loginUser(email, password) {
 async function verifyEmail(token) {
     const db = await persistence.getDatabase();
     const user = await db.collection('users').findOne({ verificationToken: token });
-    if (!user) throw new Error('Invalid token');
-    await db.collection('users').updateOne({ _id: user._id }, { $set: { emailVerified: true } });
-    return { message: 'Email verified' };
+    if (!user) throw new Error('Invalid verification token');
+    if (user.emailVerified) throw new Error('Email already verified');
+
+    await db.collection('users').updateOne(
+        { _id: user._id },
+        { $set: { emailVerified: true, verificationToken: null } }
+    );
+    return { message: 'Email verified successfully. You can now login.' };
 }
 
 async function getSession(sessionKey) {
@@ -68,11 +89,18 @@ async function deleteSession(sessionKey) {
 
 async function verifyEmailDev(email) {
     const db = await persistence.getDatabase();
+    // Normalize email to lowercase
+    email = email.toLowerCase();
+
+    const user = await db.collection('users').findOne({ email });
+    if (!user) throw new Error('User not found');
+    if (user.emailVerified) throw new Error('Email already verified');
+
     const result = await db.collection('users').updateOne(
         { email },
-        { $set: { emailVerified: true } }
+        { $set: { emailVerified: true, verificationToken: null } }
     );
-    if (result.modifiedCount === 0) throw new Error('User not found or already verified');
+    if (result.modifiedCount === 0) throw new Error('Failed to verify email');
     return { message: `Email ${email} verified for development` };
 }
 
@@ -92,17 +120,15 @@ async function submitRequest(studentId, category, semester, details) {
 
     const db = await persistence.getDatabase();
     
-    // Calculate queue length for this category
     const queueLength = await db.collection('requests').countDocuments({
         category,
         status: 'Pending'
     });
 
-    // Calculate estimated processing time
     const estimatedCompletion = calculateEstimatedCompletion(queueLength);
     
     const request = {
-        studentId: new persistence.ObjectId(studentId), // Fix: Use 'new'
+        studentId: new persistence.ObjectId(studentId),
         category,
         semester,
         details,
@@ -113,7 +139,6 @@ async function submitRequest(studentId, category, semester, details) {
 
     await db.collection('requests').insertOne(request);
     
-    // Simulate email notification
     console.log(`[EMAIL SIMULATION] Request submitted:
         To: Student ${studentId}
         Subject: Request Received
@@ -125,8 +150,8 @@ async function cancelRequest(studentId, requestId) {
     const db = await persistence.getDatabase();
     const result = await db.collection('requests').updateOne(
         {
-            _id: new persistence.ObjectId(requestId), // Fix: Use 'new'
-            studentId: new persistence.ObjectId(studentId), // Fix: Use 'new'
+            _id: new persistence.ObjectId(requestId),
+            studentId: new persistence.ObjectId(studentId),
             status: 'Pending'
         },
         { $set: { status: 'Canceled', updatedAt: new Date() } }
@@ -136,7 +161,6 @@ async function cancelRequest(studentId, requestId) {
         throw new Error('Request not found, already processed, or not owned by student');
     }
 
-    // Simulate email notification
     console.log(`[EMAIL SIMULATION] Request canceled:
         To: Student ${studentId}
         Subject: Request Canceled
@@ -146,7 +170,7 @@ async function cancelRequest(studentId, requestId) {
 
 async function getStudentRequests(studentId, semester) {
     const db = await persistence.getDatabase();
-    const query = { studentId: new persistence.ObjectId(studentId) }; // Fix: Use 'new'
+    const query = { studentId: new persistence.ObjectId(studentId) };
     if (semester) {
         query.semester = semester;
     }
@@ -181,6 +205,66 @@ function calculateEstimatedCompletion(queueLength) {
     return current;
 }
 
+async function getRequestQueues() {
+    const db = await persistence.getDatabase();
+    const queues = [];
+    for (const category of REQUEST_CATEGORIES) {
+        const count = await db.collection('requests').countDocuments({ category, status: 'Pending' });
+        queues.push({ category, count });
+    }
+    return queues;
+}
+
+async function getRequestsByCategory(category) {
+    const db = await persistence.getDatabase();
+    const requests = await db.collection('requests').find({ category, status: 'Pending' }).toArray();
+    for (let request of requests) {
+        const student = await db.collection('users').findOne({ _id: request.studentId });
+        request.student = student || { name: 'Unknown', email: 'Unknown' };
+    }
+    return requests;
+}
+
+async function getRequestById(requestId) {
+    const db = await persistence.getDatabase();
+    const request = await db.collection('requests').findOne({ _id: new persistence.ObjectId(requestId) });
+    if (request) {
+        const student = await db.collection('users').findOne({ _id: request.studentId });
+        request.student = student || { name: 'Unknown', email: 'Unknown' };
+    }
+    return request;
+}
+
+async function processRequest(requestId, action, note) {
+    const db = await persistence.getDatabase();
+    const request = await db.collection('requests').findOne({ _id: new persistence.ObjectId(requestId) });
+    if (!request || request.status !== 'Pending') {
+        throw new Error('Request not found or already processed');
+    }
+
+    const newStatus = action === 'resolve' ? 'Resolved' : 'Rejected';
+    await db.collection('requests').updateOne(
+        { _id: new persistence.ObjectId(requestId) },
+        { $set: { status: newStatus, note, updatedAt: new Date() } }
+    );
+
+    const student = await db.collection('users').findOne({ _id: request.studentId });
+
+    console.log(`[EMAIL SIMULATION] Request ${newStatus}:
+        To: ${student.email}
+        Subject: Request ${newStatus}
+        Body: Your ${request.category} request for ${request.semester} has been ${newStatus}. Note: ${note}
+    `);
+}
+
+async function getRandomPendingRequest() {
+    const db = await persistence.getDatabase();
+    const pendingRequests = await db.collection('requests').find({ status: 'Pending' }).toArray();
+    if (pendingRequests.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * pendingRequests.length);
+    return pendingRequests[randomIndex];
+}
+
 module.exports = {
     registerUser,
     loginUser,
@@ -190,5 +274,10 @@ module.exports = {
     verifyEmailDev,
     submitRequest,
     cancelRequest,
-    getStudentRequests
+    getStudentRequests,
+    getRequestQueues,
+    getRequestsByCategory,
+    getRequestById,
+    processRequest,
+    getRandomPendingRequest
 };
