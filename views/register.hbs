@@ -5,9 +5,9 @@
 {{/if}}
 
 <div class="card">
-    <div class="card-header">Create an Account</div>
+    <div class="card-header">Create Account</div>
     <div class="card-body">
-        <form action="/register" method="POST">
+        <form id="registerForm" action="/register" method="POST">
             <input type="hidden" name="_csrf" value="{{csrfToken}}">
             <div>
                 <label for="name" class="form-label">Name</label>
@@ -23,11 +23,19 @@
             </div>
             <div>
                 <label for="password" class="form-label">Password</label>
-                <input type="password" id="password" name="password" class="form-control" required>
+                <div class="input-group">
+                    <input type="password" id="password" name="password" class="form-control" required>
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <input type="checkbox" id="showPassword" onclick="togglePassword('password')">
+                            <label for="showPassword" class="ms-1 mb-0">Show</label>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div>
                 <label for="role" class="form-label">Role</label>
-                <select id="role" name="role" class="form-select" required>
+                <select id="role" name="role" class="form-control" required>
                     <option value="student">Student</option>
                     <option value="department_head">Department Head</option>
                 </select>
@@ -39,3 +47,12 @@
         </div>
     </div>
 </div>
+
+{{#section 'scripts'}}
+<script>
+function togglePassword(id) {
+    const input = document.getElementById(id);
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+</script>
+{{/section}}

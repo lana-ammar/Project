@@ -9,7 +9,6 @@ async function registerUser(name, email, degreeName, password, role) {
     }
     const db = await persistence.getDatabase();
 
-    // Normalize email to lowercase
     email = email.toLowerCase();
 
     const existingUser = await db.collection('users').findOne({ email });
@@ -20,10 +19,10 @@ async function registerUser(name, email, degreeName, password, role) {
 
     const user = {
         name,
-        email, // Already normalized
+        email,
         degreeName,
         password: hashedPassword,
-        role, // Fixed typo: was "role36"
+        role,
         emailVerified: false,
         verificationToken: token,
         createdAt: new Date()
@@ -44,7 +43,6 @@ function generateVerificationToken() {
 
 async function loginUser(email, password) {
     const db = await persistence.getDatabase();
-    // Normalize email to lowercase
     email = email.toLowerCase();
 
     const user = await db.collection('users').findOne({ email });
@@ -89,7 +87,7 @@ async function deleteSession(sessionKey) {
 
 async function verifyEmailDev(email) {
     const db = await persistence.getDatabase();
-    // Normalize email to lowercase
+
     email = email.toLowerCase();
 
     const user = await db.collection('users').findOne({ email });
@@ -102,6 +100,65 @@ async function verifyEmailDev(email) {
     );
     if (result.modifiedCount === 0) throw new Error('Failed to verify email');
     return { message: `Email ${email} verified for development` };
+}
+
+async function requestPasswordReset(email) {
+    const db = await persistence.getDatabase();
+    email = email.toLowerCase();
+
+    const user = await db.collection('users').findOne({ email });
+    if (!user) {
+        throw new Error('No account found with that email');
+    }
+
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 1000 * 60 * 60); // 1 hour expiry
+
+    await db.collection('users').updateOne(
+        { email },
+        { $set: { resetToken, resetTokenExpiry } }
+    );
+
+    console.log(`[EMAIL SIMULATION] Password reset requested:
+        To: ${email}
+        Subject: Password Reset Request
+        Body: Please reset your password by visiting http://localhost:8000/reset-password/${resetToken}
+        Expires: ${resetTokenExpiry.toISOString()}
+    `);
+}
+
+async function validateResetToken(token) {
+    const db = await persistence.getDatabase();
+    const user = await db.collection('users').findOne({
+        resetToken: token,
+        resetTokenExpiry: { $gt: new Date() }
+    });
+    return !!user;
+}
+
+async function resetPassword(token, password) {
+    const db = await persistence.getDatabase();
+    const user = await db.collection('users').findOne({
+        resetToken: token,
+        resetTokenExpiry: { $gt: new Date() }
+    });
+
+    if (!user) throw new Error('Invalid or expired reset token');
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await db.collection('users').updateOne(
+        { _id: user._id },
+        {
+            $set: { password: hashedPassword },
+            $unset: { resetToken: "", resetTokenExpiry: "" }
+        }
+    );
+
+    console.log(`[EMAIL SIMULATION] Password reset successful:
+        To: ${user.email}
+        Subject: Password Reset Confirmation
+        Body: Your password has been successfully reset.
+    `);
 }
 
 // Request handling
@@ -272,6 +329,9 @@ module.exports = {
     getSession,
     deleteSession,
     verifyEmailDev,
+    requestPasswordReset,
+    validateResetToken,
+    resetPassword,
     submitRequest,
     cancelRequest,
     getStudentRequests,

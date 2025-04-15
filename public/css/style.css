@@ -66,16 +66,16 @@ h1, h2, h3 {
     width: 100%;
     padding: 12px;
     margin-bottom: 20px;
-    border: 1px solid #d1d5db; /* Light gray border */
+    border: 1px solid #d1d5db; 
     border-radius: 8px;
     font-size: 16px;
-    background-color: #f9fafb; /* Very light gray background */
+    background-color: #f9fafb;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .form-control:focus, .form-select:focus {
     outline: none;
-    border-color: #a5b4fc; /* Soft indigo on focus */
+    border-color: #a5b4fc;
     box-shadow: 0 0 0 3px rgba(165, 180, 252, 0.1);
     background-color: #fff;
 }
@@ -110,21 +110,21 @@ h1, h2, h3 {
 }
 
 .btn-primary {
-    background: linear-gradient(90deg, #a5b4fc 0%, #c3dafe 100%); /* Soft indigo gradient */
+    background: linear-gradient(90deg, #a5b4fc 0%, #c3dafe 100%);
     color: #fff;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(90deg, #93c5fd 0%, #b6ccfe 100%); /* Slightly lighter on hover */
+    background: linear-gradient(90deg, #93c5fd 0%, #b6ccfe 100%); 
 }
 
 .btn-danger {
-    background: linear-gradient(90deg, #f87171 0%, #fca5a5 100%); /* Soft red gradient */
+    background: linear-gradient(90deg, #f87171 0%, #fca5a5 100%);
     color: #fff;
 }
 
 .btn-danger:hover {
-    background: linear-gradient(90deg, #f97316 0%, #fb923c 100%); /* Soft orange on hover */
+    background: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
 }
 
 /* Table */
@@ -138,15 +138,15 @@ h1, h2, h3 {
 
 .table th, .table td {
     padding: 16px;
-    border-bottom: 1px solid #e5e7eb; /* Light gray border */
+    border-bottom: 1px solid #e5e7eb;
     text-align: left;
     font-size: 15px;
 }
 
 .table th {
-    background-color: #f9fafb; /* Very light gray */
+    background-color: #f9fafb; 
     font-weight: 600;
-    color: #4b5eAA; /* Soft indigo */
+    color: #4b5eAA; 
 }
 
 .table-hover tbody tr {
@@ -154,17 +154,17 @@ h1, h2, h3 {
 }
 
 .table-hover tbody tr:hover {
-    background-color: #f1f5f9; /* Light slate on hover */
+    background-color: #f1f5f9; 
 }
 
 /* Links in Table */
 .table td a {
-    color: #a5b4fc; /* Soft indigo */
+    color: #a5b4fc;
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
 .table td a:hover {
-    color: #93c5fd; /* Lighter indigo on hover */
+    color: #93c5fd; 
     text-decoration: underline;
 }
