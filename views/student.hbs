@@ -69,6 +69,7 @@
                     <th>Status</th>
                     <th>Submitted</th>
                     <th>Estimated Completion</th>
+                    <th>Note</th> <!-- Add Note column -->
                     <th>Action</th>
                 </tr>
             </thead>
@@ -81,6 +82,7 @@
                         <td>{{this.status}}</td>
                         <td>{{formatDate this.createdAt}}</td>
                         <td>{{#if this.estimatedCompletion}}{{formatDate this.estimatedCompletion}}{{else}}N/A{{/if}}</td>
+                        <td>{{#if this.note}}{{this.note}}{{else}}N/A{{/if}}</td> 
                         <td>
                             {{#if (eq this.status "Pending")}}
                                 <form action="/requests/cancel/{{this._id}}" method="POST" style="display:inline;">
@@ -92,7 +94,7 @@
                     </tr>
                 {{else}}
                     <tr>
-                        <td colspan="7">No requests found.</td>
+                        <td colspan="8">No requests found.</td> 
                     </tr>
                 {{/each}}
             </tbody>
