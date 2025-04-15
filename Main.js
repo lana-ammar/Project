@@ -8,6 +8,7 @@ const business = require('./business');
 const app = express();
 const router = express.Router();
 
+// Handlebars setup with simplified section helper
 const hbs = exphbs.create({
     extname: '.hbs',
     defaultLayout: 'main',
@@ -15,13 +16,14 @@ const hbs = exphbs.create({
     helpers: {
         eq: (a, b) => a === b,
         formatDate: (date) => date ? new Date(date).toLocaleString() : '',
-        section: function(name, options) {
-            if (!this._sections) this._sections = {};
+        section(name, options) {
+            this._sections = this._sections || {};
             this._sections[name] = options.fn(this);
             return null;
         }
     }
 });
+
 app.engine('.hbs', hbs.engine);
 app.set('view engine', '.hbs');
 app.set('views', path.join(__dirname, 'views'));
@@ -89,68 +91,45 @@ router.get('/register', (req, res) => {
 
 // Forgot Password route
 router.get('/forgot-password', (req, res) => {
-    res.render('forgot-password', { title: 'Forgot Password', csrfToken: req.csrfToken });
+    res.render('forgot-password', { title: 'Forgot Password', csrfToken: req.csrfToken, showPasswordField: false });
 });
 
-// Password reset request
+// Password reset handling
 router.post('/forgot-password', verifyCsrfToken, async (req, res) => {
     try {
-        const { email } = req.body;
-        await business.requestPasswordReset(email);
-        res.render('forgot-password', {
-            title: 'Forgot Password',
-            message: 'A password reset link has been sent to your email.',
-            csrfToken: req.csrfToken
-        });
+        const { email, password } = req.body;
+        if (!email) {
+            throw new Error('Email is required');
+        }
+        const userExists = await business.checkEmailExists(email);
+        if (!userExists) {
+            throw new Error('No account found with that email');
+        }
+        if (password) {
+            // Update password if provided
+            await business.updatePassword(email, password);
+            res.render('index', {
+                title: 'Login',
+                message: 'Password reset successfully. Please login with your new password.',
+                csrfToken: req.csrfToken
+            });
+        } else {
+            // Show password field if email exists but no password yet
+            res.render('forgot-password', {
+                title: 'Forgot Password',
+                csrfToken: req.csrfToken,
+                showPasswordField: true,
+                email,
+                message: 'Email found. Please enter your new password.'
+            });
+        }
     } catch (err) {
         console.error('Forgot password error:', err.message);
         res.status(400).render('forgot-password', {
             title: 'Forgot Password',
             message: err.message,
-            csrfToken: req.csrfToken
-        });
-    }
-});
-
-// Password reset form
-router.get('/reset-password/:token', async (req, res) => {
-    try {
-        const token = req.params.token;
-        const valid = await business.validateResetToken(token);
-        if (!valid) throw new Error('Invalid or expired reset token');
-        res.render('reset-password', {
-            title: 'Reset Password',
-            token,
-            csrfToken: req.csrfToken
-        });
-    } catch (err) {
-        console.error('Reset password form error:', err.message);
-        res.render('forgot-password', {
-            title: 'Forgot Password',
-            message: 'Invalid or expired reset token. Please request a new one.',
-            csrfToken: req.csrfToken
-        });
-    }
-});
-
-// Handle password reset submission
-router.post('/reset-password/:token', verifyCsrfToken, async (req, res) => {
-    try {
-        const { token } = req.params;
-        const { password } = req.body;
-        await business.resetPassword(token, password);
-        res.render('index', {
-            title: 'Login',
-            message: 'Password reset successfully. Please login with your new password.',
-            csrfToken: req.csrfToken
-        });
-    } catch (err) {
-        console.error('Reset password error:', err.message);
-        res.render('reset-password', {
-            title: 'Reset Password',
-            token,
-            message: err.message,
-            csrfToken: req.csrfToken
+            csrfToken: req.csrfToken,
+            showPasswordField: false
         });
     }
 });

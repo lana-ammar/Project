@@ -87,7 +87,6 @@ async function deleteSession(sessionKey) {
 
 async function verifyEmailDev(email) {
     const db = await persistence.getDatabase();
-
     email = email.toLowerCase();
 
     const user = await db.collection('users').findOne({ email });
@@ -102,70 +101,35 @@ async function verifyEmailDev(email) {
     return { message: `Email ${email} verified for development` };
 }
 
-async function requestPasswordReset(email) {
+async function checkEmailExists(email) {
     const db = await persistence.getDatabase();
     email = email.toLowerCase();
-
     const user = await db.collection('users').findOne({ email });
-    if (!user) {
-        throw new Error('No account found with that email');
-    }
-
-    const resetToken = crypto.randomBytes(20).toString('hex');
-    const resetTokenExpiry = new Date(Date.now() + 1000 * 60 * 60); // 1 hour expiry
-
-    await db.collection('users').updateOne(
-        { email },
-        { $set: { resetToken, resetTokenExpiry } }
-    );
-
-    console.log(`[EMAIL SIMULATION] Password reset requested:
-        To: ${email}
-        Subject: Password Reset Request
-        Body: Please reset your password by visiting http://localhost:8000/reset-password/${resetToken}
-        Expires: ${resetTokenExpiry.toISOString()}
-    `);
-}
-
-async function validateResetToken(token) {
-    const db = await persistence.getDatabase();
-    const user = await db.collection('users').findOne({
-        resetToken: token,
-        resetTokenExpiry: { $gt: new Date() }
-    });
     return !!user;
 }
 
-async function resetPassword(token, password) {
+async function updatePassword(email, password) {
     const db = await persistence.getDatabase();
-    const user = await db.collection('users').findOne({
-        resetToken: token,
-        resetTokenExpiry: { $gt: new Date() }
-    });
-
-    if (!user) throw new Error('Invalid or expired reset token');
-
+    email = email.toLowerCase();
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db.collection('users').updateOne(
-        { _id: user._id },
-        {
-            $set: { password: hashedPassword },
-            $unset: { resetToken: "", resetTokenExpiry: "" }
-        }
+    const result = await db.collection('users').updateOne(
+        { email },
+        { $set: { password: hashedPassword } }
     );
-
+    if (result.modifiedCount === 0) {
+        throw new Error('Failed to update password');
+    }
     console.log(`[EMAIL SIMULATION] Password reset successful:
-        To: ${user.email}
+        To: ${email}
         Subject: Password Reset Confirmation
         Body: Your password has been successfully reset.
     `);
 }
 
-// Request handling
 const REQUEST_CATEGORIES = ['Change Section', 'Register Over Cap', 'Capstone Registration'];
-const WORKING_HOURS_START = 9; // 9 AM
-const WORKING_HOURS_END = 17; // 5 PM
-const MINUTES_PER_REQUEST = 15; // Estimated time per request
+const WORKING_HOURS_START = 9;
+const WORKING_HOURS_END = 17;
+const MINUTES_PER_REQUEST = 15;
 
 async function submitRequest(studentId, category, semester, details) {
     if (!REQUEST_CATEGORIES.includes(category)) {
@@ -329,9 +293,8 @@ module.exports = {
     getSession,
     deleteSession,
     verifyEmailDev,
-    requestPasswordReset,
-    validateResetToken,
-    resetPassword,
+    checkEmailExists,
+    updatePassword,
     submitRequest,
     cancelRequest,
     getStudentRequests,
